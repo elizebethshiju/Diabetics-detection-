@@ -1,0 +1,113 @@
+# Correlation Analysis for Diabetes Detection
+This notebook contain the predictions made for diabetic and non-diabetic patients.
+
+import pandas as pd
+from pandas import DataFrame
+
+
+
+bank = pd.read_csv('diabetes.csv')
+bank.head()
+
+bank.shape
+
+
+bank.describe
+
+bank.info()
+
+
+# Finding missing values
+
+
+bank.isnull().sum()
+
+
+
+# axis=0 to remove rows having null values and inplace=True to perform operation on the dataframe without creating new variable.
+bank.dropna(axis=0,inplace=True)
+
+# Detecting Outliers¶
+
+
+columns = bank.columns.tolist()
+bank.boxplot(column=columns)
+
+#For removing outliers
+
+def remove_outlier(df_in, col_name):
+    q1 = df_in[col_name].quantile(0.25)
+    q3 = df_in[col_name].quantile(0.75)
+    iqr = q3-q1 #Interquartile range
+    fence_low  = q1-1.5*iqr
+    fence_high = q3+1.5*iqr
+    df_out = df_in.loc[(df_in[col_name] > fence_low) & (df_in[col_name] < fence_high)]
+    return df_out
+
+
+bank = remove_outlier(bank,'Glucose')
+bank = remove_outlier(bank,'BloodPressure')
+bank.boxplot(column=columns)
+
+
+list(bank.columns)
+
+ convert any obvious categorical variables to categories:
+
+bank['Outcome'] = bank['Outcome'].astype('category')
+bank.describe(include='category')
+
+# Scatterplots 
+Scatterplots are a fundamental graph type—much less complicated than histograms and boxplots. As such, we might use the Mathplotlib library instead of the Seaborn library. But since we have already used Seaborn, I will stick with it here. Just know that there are many ways to create scatterplots and other basic graphs in Python.
+
+To create a bare-bones scatterplot, we must do four things:
+
+Load the seaborn library
+Specify the source data frame
+Set the x axis, which is generally the name of a predictor/independent variable
+Set the y axis, which is generally the name of a response/dependent variable
+
+import seaborn as sns
+sns.scatterplot(x="Glucose", y="BloodPressure", data=bank);
+
+
+# Adding labels 
+Here I assign the results of the scatterplot() call to a variable called ax and then set various properties of ax. I end the last line of the code block with a semicolon to suppress return values:
+
+ax = sns.scatterplot(x="Glucose", y="BloodPressure", data=bank)
+ax.set_title("Glucose vs. BloodPressure")
+ax.set_xlabel("BloodPressure");
+
+# Adding a best fit line 
+The easiest way to "add" a best-fit line to a scatterplot is to use a different plotting method. Seaborn's lmplot() method (where "lm" stands for "linear model") is one possibility:
+
+sns.lmplot(x="BloodPressure", y="Glucose", data=bank);
+
+# Adding color as a third dimension
+size, or some other visual cue to add a third dimension to a two-dimensional scatterplot. In the case of color (or "hue" in Seaborn terminology), this third dimension need to be a non-continuous variable. This is because the palette of colors available has a finite number of options.
+
+
+
+sns.lmplot(x="BloodPressure", y="Glucose", hue="Outcome", data=bank);
+
+
+# to find the Coefficient of correlation
+from scipy import stats
+stats.pearsonr(bank['Glucose'], bank['BloodPressure'])
+
+#to find the correlation matrix
+cormat = bank.corr()
+round(cormat,2)
+
+#Correlation matrix to heat map 
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+plt.figure(figsize=(16, 6))
+heatmap = sns.heatmap(bank.corr(), vmin=-1, vmax=1, annot=True)
+heatmap.set_title('Correlation Heatmap', fontdict={'fontsize':12}, pad=12);
+
+# EDA using pairplots
+
+sns.pairplot(bank, hue='Outcome')
+
